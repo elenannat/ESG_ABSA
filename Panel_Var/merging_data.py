@@ -3,7 +3,8 @@
 import pandas as pd
 import re
 from unidecode import unidecode
-from fuzzywuzzy import process
+from concurrent.futures import ProcessPoolExecutor
+from rapidfuzz import process, fuzz
 
 
 # Load data from an Excel file
@@ -23,22 +24,20 @@ def clean_name(name):
     name = re.sub(r'\s+', ' ', name).strip()
     return name
 
+def match_item(item, choices, threshold=90):
+    match = process.extractOne(item, choices, scorer=fuzz.WRatio, score_cutoff=threshold)
+    if match:
+        return (item, match[0], match[1])
+    return (item, None, None)
 
 def get_matches(df, col1, df2, col2, threshold=90):
-    # Store matches in a list
-    matches = []
+    choices = df2[col2].tolist()
+    with ProcessPoolExecutor() as executor:
+        results = list(executor.map(match_item, df[col1], [choices]*len(df), [threshold]*len(df)))
+    return pd.DataFrame(results, columns=[col1, 'matched_name', 'score'])
 
-    # Iterate over each item in column 1
-    for item in df[col1]:
-        # Find best match in df2[col2]
-        match = process.extractOne(item, df2[col2], score_cutoff=threshold)
-        if match:
-            matches.append((item, match[0], match[1]))  # Append the match and score
-        else:
-            matches.append((item, None, None))  # No match found
-
-    # Return a DataFrame of matches
-    return pd.DataFrame(matches, columns=[col1, 'matched_name', 'score'])
+# Use this function as before
+matched_df = get_matches(df1, 'clean_name', df2, 'clean_name')
 
 # Apply the cleaning function to the company name columns
 df1['clean_name'] = df1['Company_name'].apply(clean_name)

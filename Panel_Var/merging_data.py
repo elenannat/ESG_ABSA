@@ -12,6 +12,8 @@ df2 = pd.read_stata(r'./Data/SP_ESG/SPData.dta')
 
 # Create cleaning function to prep data for merging
 
+df2 = df2[['scoredate','csaindustrygroupname','csascoretypename','dimensionname','scorevalue','companyname','country']]
+
 
 def clean_name(name):
     name = name.lower()
@@ -38,6 +40,12 @@ matched_df = pd.merge(df1, df2, on='clean_name', how='left', suffixes=('_df1', '
 unmatched_df1 = matched_df[matched_df['Company_name'].isna()]
 
 matched_df['Combined_Names'] = matched_df['Company_name'] + " | " + matched_df['companyname']
+
+matched_df = matched_df[['clean_name','scoredate','csaindustrygroupname','csascoretypename','dimensionname','scorevalue','companyname','country','Combined_Names']]
+
+mat
+
+matched_df.drop_duplicates(inplace=True)
 
 # Save results to pickle
 matched_df.to_pickle(r'./Data/matched_df.pkl')

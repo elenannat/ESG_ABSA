@@ -1,14 +1,25 @@
-'''Merge all data: Results from Few-Shot S&P-ESG-Scores and Refinitiv ESG-Scores'''
+'''Merge all data: Results from Few-Shot S&P-ESG-Scores, Refinitiv ESG-Scores and Bloomberg'''
 
 import pandas as pd
 import re
 from unidecode import unidecode
 
 # Load data from an Excel file
-df1 = pd.read_excel(r'./Data/Fewshot_results_timeseries.xlsx')
+df1 = pd.read_excel(r'./Data/Fewshot_results_timeseries_update.xlsx')
 
 # Load data from a Stata file (.dta)
 df2 = pd.read_stata(r'./Data/SP_ESG/SPData.dta')
+
+# Load integrated data from stata file
+
+df_int = pd.read_stata(r'./Data/All_ESG/EuroStoxx50_2014-2024.dta')
+df_int_annual = pd.read_stata(r'./Data/All_ESG/EuroStoxx50_2014-2024_annual.dta')
+df_int_meta = pd.read_excel(r'./Data/All_ESG/EuroStoxx50-ticker-ciq-mapping.xlsx')
+df_int_meta_ticker = pd.read_stata(r'./Data/All_ESG/EuroStoxx50CompList.dta')
+
+# Merge the ticker column from df_int_meta onto df_int based on the isin column
+df_int_meta_merged = pd.merge(df_int, df_int_meta_ticker[['isin', 'ticker']], on='isin', how='left')
+
 
 # Create cleaning function to prep data for merging
 
@@ -43,9 +54,11 @@ matched_df['Combined_Names'] = matched_df['Company_name'] + " | " + matched_df['
 
 matched_df = matched_df[['clean_name','scoredate','csaindustrygroupname','csascoretypename','dimensionname','scorevalue','companyname','country','Combined_Names']]
 
-mat
+matched_df['scoredate'] = [date.year for date in matched_df['scoredate']]
 
-matched_df.drop_duplicates(inplace=True)
+mean_scores = matched_df.groupby(['clean_name', 'scoredate', 'country','csaindustrygroupname','csascoretypename','dimensionname'])['scorevalue'].mean().reset_index()
+
+mean_scores.drop_duplicates(inplace=True)
 
 # Save results to pickle
-matched_df.to_pickle(r'./Data/matched_df.pkl')
+mean_scores.to_pickle(r'./Data/matched_df_update.pkl')

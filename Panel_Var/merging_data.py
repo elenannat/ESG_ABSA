@@ -1,4 +1,4 @@
-'''Merge all data: Results from Few-Shot S&P-ESG-Scores, Refinitiv ESG-Scores and Bloomberg'''
+'''Merge all data: Results from Few-Shot S&P-ESG-Scores, Refinitiv ESG-Scores and Bloomberg for further analysis in R'''
 
 import pandas as pd
 import re
@@ -19,9 +19,11 @@ df_int_meta = pd.read_excel(r'./Data/All_ESG/EuroStoxx50-ticker-ciq-mapping.xlsx
 df_int_meta_ticker = pd.read_stata(r'./Data/All_ESG/EuroStoxx50CompList.dta')
 df_int_meta_name = pd.read_csv(r'./Data/All_ESG/Refinitiv-ESG_Scores-2008-2024_ret2024-04-29.csv', sep=';')
 
-# Load MSCI data
+# Load MSCI data (probably not needed)
 
 MSCI_data = pd.read_stata(r'./Data/MSCI_ESG_Ratings/MSCI_ESG_Ratings_2011-2021-ret2022-09-27.dta')
+
+# No need to load agg. Refintiv and Bloomberg data - already agg. and clean
 
 # Merge names on integrated dataframe
 
@@ -53,6 +55,9 @@ df1['clean_name'] = df1['Company_name'].apply(clean_name)
 df2['clean_name'] = df2['companyname'].apply(clean_name)
 
 df_int_merged['clean_name'] = df_int_merged['Company Common Name'].apply(clean_name)
+
+df_ref_bloom['clean_name'] = df_ref_bloom['Company Name'].apply(clean_name)
+
 
 # Perform direct matching using Pandas merge for efficiency for dataframe without integration
 matched_df = pd.merge(df1, df2, on='clean_name', how='left', suffixes=('_df1', '_df2'))

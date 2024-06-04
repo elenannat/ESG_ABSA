@@ -17,6 +17,8 @@ sns.set(style="whitegrid")
 # Results
 sents = pd.read_excel(r'data/Fewshot_results_timeseries_update.xlsx')
 
+sents = sents[sents['ESG-Subcategory'] != 'non-ESG']
+
 
 # ... and Metadata
 metadata = pd.read_pickle(r'data/230627_cleaned_dataset.pkl')
@@ -46,6 +48,7 @@ cbar.ax.yaxis.label.set_weight('bold')
 
 
 plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update.pdf', format='pdf', bbox_inches='tight')  # Save as PDF
+plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update.eps', bbox_inches='tight')  # Save as eps
 
 
 plt.figure(figsize=(10, 6))
@@ -97,8 +100,26 @@ os.makedirs(output_dir, exist_ok=True)
 output_file = os.path.join(output_dir, "wordcloud.png")
 plt.savefig(output_file, format='png', bbox_inches='tight')
 
+
+# Save the word cloud to the 'results' folder as an EPS file
+output_file = os.path.join(output_dir, "wordcloud.eps")
+
+# Create a figure with no background and no axis, with higher DPI
+fig = plt.figure(figsize=(10, 10), dpi=500)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis("off")
+
+# Save the figure as an EPS file
+plt.savefig(output_file, format='eps', bbox_inches='tight')
+plt.close(fig)
+
 # Show the plot
 plt.show()
+
+# Calculate the average sentiment for the word cloud
+
+average_sentiment = top_entities['Net_Sentiment'].mean()
+print(f"Average Sentiment: {average_sentiment}")
 
 # do the same for just E, S and G
 
@@ -154,6 +175,9 @@ def create_wordcloud_for_esg_category(df, category, output_dir, top_n=top_n):
     plt.savefig(output_file, format='png', bbox_inches='tight')
     plt.close()
 
+    # Calculate and print the average sentiment for the category
+    average_sentiment = top_entities['Net_Sentiment'].mean()
+    print(f"Average Sentiment for {category}: {average_sentiment}")
 
 # Create the 'results' directory if it doesn't exist
 output_dir = "results"

@@ -18,6 +18,7 @@ sns.set(style="whitegrid")
 sents = pd.read_excel(r'data/Fewshot_results_timeseries_update.xlsx')
 
 sents = sents[sents['ESG-Subcategory'] != 'non-ESG']
+sents = sents[sents['ESG-Subcategory'] != 'Governance']
 
 
 # ... and Metadata
@@ -32,7 +33,7 @@ pivot_table.drop(['ESG'], inplace=True)
 
 # Creating the heatmap
 plt.figure(figsize=(12, 10))  # Adjust size to ensure all categories are visible
-ax = sns.heatmap(pivot_table, annot=False, fmt=".2f", cmap='coolwarm')  # Turn off annotations
+ax = sns.heatmap(pivot_table, annot=False, fmt=".2f", cmap='RdYlGn')  # Turn off annotations
 
 # Enhance the title and axis labels with bold formatting
 ax.set_title('Average Net Sentiment by ESG Subcategory Over Years', fontsize=16, weight='bold')

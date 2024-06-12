@@ -15,14 +15,16 @@ sns.set(style="whitegrid")
 # Import data
 
 # Results
-sents = pd.read_excel(r'data/Fewshot_results_timeseries_update.xlsx')
+sents_old = pd.read_excel(r'data/Fewshot_results_timeseries_update.xlsx')
+sents = pd.read_excel(r'data/Fewshot_results_timeseries_update2.xlsx')
 
 sents = sents[sents['ESG-Subcategory'] != 'non-ESG']
 sents = sents[sents['ESG-Subcategory'] != 'Governance']
 
 
 # ... and Metadata
-metadata = pd.read_pickle(r'data/230627_cleaned_dataset.pkl')
+metadata_old = pd.read_pickle(r'data/230627_cleaned_dataset.pkl')
+metadata = pd.read_pickle(r'data/240610_cleaned_dataset.pkl')
 
 # Assuming 'sents' is your DataFrame and it contains a column named 'ESG_Subcategory' for the subcategories
 # Create a pivot table
@@ -48,8 +50,8 @@ cbar.ax.tick_params(labelsize=12)
 cbar.ax.yaxis.label.set_weight('bold')
 
 
-plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update.pdf', format='pdf', bbox_inches='tight')  # Save as PDF
-plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update.eps', bbox_inches='tight')  # Save as eps
+plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update2.pdf', format='pdf', bbox_inches='tight')  # Save as PDF
+plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update2.eps', bbox_inches='tight')  # Save as eps
 
 
 plt.figure(figsize=(10, 6))
@@ -98,12 +100,12 @@ output_dir = "results"
 os.makedirs(output_dir, exist_ok=True)
 
 # Save the word cloud to the 'results' folder
-output_file = os.path.join(output_dir, "wordcloud.png")
+output_file = os.path.join(output_dir, "wordcloud2.png")
 plt.savefig(output_file, format='png', bbox_inches='tight')
 
 
 # Save the word cloud to the 'results' folder as an EPS file
-output_file = os.path.join(output_dir, "wordcloud.eps")
+output_file = os.path.join(output_dir, "wordcloud2.eps")
 
 # Create a figure with no background and no axis, with higher DPI
 fig = plt.figure(figsize=(10, 10), dpi=500)
@@ -172,7 +174,7 @@ def create_wordcloud_for_esg_category(df, category, output_dir, top_n=top_n):
     plt.axis('off')
 
     # Save the word cloud to a file
-    output_file = os.path.join(output_dir, f"wordcloud_{category}.png")
+    output_file = os.path.join(output_dir, f"wordcloud_{category}2.png")
     plt.savefig(output_file, format='png', bbox_inches='tight')
     plt.close()
 

@@ -6,7 +6,9 @@ from unidecode import unidecode
 
 
 # Load data from an Excel file
-df1 = pd.read_excel(r'./Data/Fewshot_results_timeseries_update.xlsx')
+df1_old = pd.read_excel(r'./Data/Fewshot_results_timeseries_update.xlsx')
+
+df1 = pd.read_excel(r'./Data/Fewshot_results_timeseries_update2.xlsx')
 
 # Load data from a Stata file (.dta)
 df2 = pd.read_stata(r'./Data/SP_ESG/SPData.dta')
@@ -18,10 +20,6 @@ df_int_annual = pd.read_stata(r'./Data/All_ESG/EuroStoxx50_2014-2024_annual.dta'
 df_int_meta = pd.read_excel(r'./Data/All_ESG/EuroStoxx50-ticker-ciq-mapping.xlsx')
 df_int_meta_ticker = pd.read_stata(r'./Data/All_ESG/EuroStoxx50CompList.dta')
 df_int_meta_name = pd.read_csv(r'./Data/All_ESG/Refinitiv-ESG_Scores-2008-2024_ret2024-04-29.csv', sep=';')
-
-# Load MSCI data (probably not needed)
-
-MSCI_data = pd.read_stata(r'./Data/MSCI_ESG_Ratings/MSCI_ESG_Ratings_2011-2021-ret2022-09-27.dta')
 
 # No need to load agg. Refintiv and Bloomberg data - already agg. and clean
 
@@ -56,9 +54,6 @@ df2['clean_name'] = df2['companyname'].apply(clean_name)
 
 df_int_merged['clean_name'] = df_int_merged['Company Common Name'].apply(clean_name)
 
-df_ref_bloom['clean_name'] = df_ref_bloom['Company Name'].apply(clean_name)
-
-
 # Perform direct matching using Pandas merge for efficiency for dataframe without integration
 matched_df = pd.merge(df1, df2, on='clean_name', how='left', suffixes=('_df1', '_df2'))
 
@@ -77,7 +72,7 @@ mean_scores = matched_df.groupby(['clean_name', 'scoredate','csaindustrygroupnam
 mean_scores.drop_duplicates(inplace=True)
 
 # Save results to pickle
-mean_scores.to_pickle(r'./Data/matched_df_update.pkl')
+mean_scores.to_pickle(r'./Data/matched_df_update2.pkl')
 
 # create three different dfs from integrated dataframe !!!!!!!!!!! Not final since Companies do not match with ours!!!!
 # 1. Get list of companies we need

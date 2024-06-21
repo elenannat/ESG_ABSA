@@ -3,9 +3,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-
-import numpy as np
+import os
 from wordcloud import WordCloud
 
 
@@ -50,8 +48,8 @@ cbar.ax.tick_params(labelsize=12)
 cbar.ax.yaxis.label.set_weight('bold')
 
 
-plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update2.pdf', format='pdf', bbox_inches='tight')  # Save as PDF
-plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update2.eps', bbox_inches='tight')  # Save as eps
+plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update2.pdf', format='pdf', bbox_inches='tight')
+plt.savefig(r'./results/ESG_Subcategories_Sentiment_Heatmap_update2.eps', bbox_inches='tight')
 
 
 plt.figure(figsize=(10, 6))
@@ -67,7 +65,8 @@ plt.show()
 entities = pd.read_excel(r'data/entities_df_update.xlsx').drop(columns=['Unnamed: 0'])
 
 # Calculate net sentiment
-entities['Net_Sentiment'] = (entities['Positive'] - entities['Negative']) / (entities['Positive'] + entities['Negative'] + entities['Neutral'])
+entities['Net_Sentiment'] = ((entities['Positive'] - entities['Negative']) /
+                             (entities['Positive'] + entities['Negative'] + entities['Neutral']))
 
 # Select the top 100 entities based on total count
 top_entities = entities.nlargest(100, 'Total')
@@ -76,10 +75,12 @@ top_entities = entities.nlargest(100, 'Total')
 word_freq = dict(zip(top_entities['Entity'], top_entities['Total']))
 
 # Normalize the net sentiment to be between 0 and 1 for color mapping
-norm_sentiment = (top_entities['Net_Sentiment'] - top_entities['Net_Sentiment'].min()) / (top_entities['Net_Sentiment'].max() - top_entities['Net_Sentiment'].min())
+norm_sentiment = ((top_entities['Net_Sentiment'] - top_entities['Net_Sentiment'].min()) /
+                  (top_entities['Net_Sentiment'].max() - top_entities['Net_Sentiment'].min()))
 
 # Generate colors from green to red
 colors = plt.colormaps['RdYlGn'](norm_sentiment)
+
 
 # Create a color function for the word cloud
 def color_func(word, font_size, position, orientation, random_state=None, **kwargs):
@@ -87,8 +88,10 @@ def color_func(word, font_size, position, orientation, random_state=None, **kwar
     color = colors[index]
     return tuple(int(c * 255) for c in color[:3])
 
+
 # Generate the word cloud
-wordcloud = WordCloud(width=800, height=400, background_color='white', color_func=color_func).generate_from_frequencies(word_freq)
+wordcloud = WordCloud(width=800, height=400,
+                      background_color='white', color_func=color_func).generate_from_frequencies(word_freq)
 
 # Display the word cloud
 plt.figure(figsize=(10, 5))
@@ -181,6 +184,7 @@ def create_wordcloud_for_esg_category(df, category, output_dir, top_n=top_n):
     # Calculate and print the average sentiment for the category
     average_sentiment = top_entities['Net_Sentiment'].mean()
     print(f"Average Sentiment for {category}: {average_sentiment}")
+
 
 # Create the 'results' directory if it doesn't exist
 output_dir = "results"

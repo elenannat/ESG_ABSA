@@ -25,15 +25,16 @@ df_int_meta_name = pd.read_csv(r'./Data/All_ESG/Refinitiv-ESG_Scores-2008-2024_r
 
 # Merge names on integrated dataframe
 
-df_int_merged = pd.merge(df_int, df_int_meta_name[['ISIN', 'Company Common Name']], left_on='isin', right_on='ISIN', how='left')
+df_int_merged = pd.merge(df_int, df_int_meta_name[['ISIN', 'Company Common Name']], left_on='isin',
+                         right_on='ISIN', how='left')
 
 # Drop the redundant 'ISIN' column after merge
 df_int_merged = df_int_merged.drop(columns=['ISIN'])
 
 # Create cleaning function to prep data for merging
 
-df2 = df2[['scoredate','csaindustrygroupname','csascoretypename','dimensionname','scorevalue','companyname','country']]
-
+df2 = df2[['scoredate', 'csaindustrygroupname', 'csascoretypename', 'dimensionname',
+           'scorevalue', 'companyname', 'country']]
 
 def clean_name(name):
     name = name.lower()
@@ -52,6 +53,19 @@ def clean_name(name):
 df1['clean_name'] = df1['Company_name'].apply(clean_name)
 df2['clean_name'] = df2['companyname'].apply(clean_name)
 
+
+
+# Dictionary for replacement
+replace_dict = {
+    'mercedesbenz group': 'mercedes benz',
+    'munchener ruckversicherungsgesellschaft': 'muenchener rueckversicherungs',
+    'sanofi': 'sanofi sa'
+}
+
+# Replace values in the 'companyname' column
+
+df2['clean_name'] = df2['clean_name'].replace(replace_dict)
+
 df_int_merged['clean_name'] = df_int_merged['Company Common Name'].apply(clean_name)
 
 # Perform direct matching using Pandas merge for efficiency for dataframe without integration
@@ -65,22 +79,19 @@ matched_df['Combined_Names'] = matched_df['Company_name'] + " | " + matched_df['
 matched_df = matched_df[['clean_name','scoredate','csaindustrygroupname','csascoretypename','dimensionname','scorevalue','companyname','country','Combined_Names']]
 
 matched_df['scoredate'] = [date.year for date in matched_df['scoredate']]
-matched_df.drop(['country'], axis=1, inplace=True)
 
 mean_scores = matched_df.groupby(['clean_name', 'scoredate','csaindustrygroupname','csascoretypename','dimensionname'])['scorevalue'].mean().reset_index()
 
 mean_scores.drop_duplicates(inplace=True)
 
 # Save results to pickle
-mean_scores.to_pickle(r'./Data/matched_df_update2.pkl')
+mean_scores.to_pickle(r'./Data/matched_df_update3.pkl')
 
 # create three different dfs from integrated dataframe !!!!!!!!!!! Not final since Companies do not match with ours!!!!
 # 1. Get list of companies we need
 
 df_companies = pd.DataFrame(matched_df['clean_name'].unique(), columns=['Company Name'])
 df_companies.to_excel(r'./Data/companies.xlsx', index=False)
-
-
 
 # Create the Bloomberg scores DataFrame
 bloomberg_df = df_int_merged[['Company Common Name', 'clean_name', 'scoredate',

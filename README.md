@@ -79,5 +79,5 @@ Please contact us to obtain these files.
 
 ## Contact
 For any questions or support, please contact:
-- **Name**: [Your Name]
-- **Email**: [Your Email]
+- **Name**: Elena Tönjes
+- **Email**: elena.toenjes@web.de

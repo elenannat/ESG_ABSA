@@ -6,8 +6,8 @@ This project involves training and applying an ABSA few-shot model and estimatin
 ## Installation
 1. Clone the repository:
     ```bash
-    git clone <repository-url>
-    cd <repository-directory>
+    git clone https://github.com/elenannat/ESG_ABSA.git
+    cd ESG_ABSA
     ```
 
 2. Install the required dependencies:

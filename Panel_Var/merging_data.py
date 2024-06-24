@@ -1,45 +1,15 @@
-'''Merge all data: Results from Few-Shot S&P-ESG-Scores, Refinitiv ESG-Scores and Bloomberg for further analysis in R'''
-
 import pandas as pd
 import re
 from unidecode import unidecode
 
 
-# Load data from an Excel file
-df1_old = pd.read_excel(r'./Data/Fewshot_results_timeseries_update.xlsx')
-
-df1 = pd.read_excel(r'./Data/Fewshot_results_timeseries_update2.xlsx')
-
-# Load data from a Stata file (.dta)
-df2 = pd.read_stata(r'./Data/SP_ESG/SPData.dta')
-
-# Load integrated data from stata file
-
-df_int = pd.read_stata(r'./Data/All_ESG/EuroStoxx50_2014-2024.dta')
-df_int_annual = pd.read_stata(r'./Data/All_ESG/EuroStoxx50_2014-2024_annual.dta')
-df_int_meta = pd.read_excel(r'./Data/All_ESG/EuroStoxx50-ticker-ciq-mapping.xlsx')
-df_int_meta_ticker = pd.read_stata(r'./Data/All_ESG/EuroStoxx50CompList.dta')
-df_int_meta_name = pd.read_csv(r'./Data/All_ESG/Refinitiv-ESG_Scores-2008-2024_ret2024-04-29.csv', sep=';')
-
-# No need to load agg. Refintiv and Bloomberg data - already agg. and clean
-
-# Merge names on integrated dataframe
-
-df_int_merged = pd.merge(df_int, df_int_meta_name[['ISIN', 'Company Common Name']], left_on='isin',
-                         right_on='ISIN', how='left')
-
-# Drop the redundant 'ISIN' column after merge
-df_int_merged = df_int_merged.drop(columns=['ISIN'])
-
-# Create cleaning function to prep data for merging
-
-df2 = df2[['scoredate', 'csaindustrygroupname', 'csascoretypename', 'dimensionname',
-           'scorevalue', 'companyname', 'country']]
-
 def clean_name(name):
+    """
+    Clean company names for merging by normalizing, removing non-alphanumeric characters,
+    and simplifying common legal terms.
+    """
     name = name.lower()
     name = unidecode(name)  # Normalize accents
-    # Simplify common legal terms
     name = re.sub(r'\b(aktiengesellschaft)\b', 'ag', name)
     name = re.sub(r'\b(societe en commandite par actions|société en commandite par actions)\b', 'sca', name)
     name = re.sub(r'\b(societe anonyme|société anonyme)\b', 'sa', name)
@@ -49,11 +19,27 @@ def clean_name(name):
     return ' '.join(tokens[:2])  # Return the first two tokens
 
 
-# Clean names in data frame
+# Load data
+df1_old = pd.read_excel('./Data/Fewshot_results_timeseries_update.xlsx')
+df1 = pd.read_excel('./Data/Fewshot_results_timeseries_update2.xlsx')
+df2 = pd.read_stata('./Data/SP_ESG/SPData.dta')
+df_int = pd.read_stata('./Data/All_ESG/EuroStoxx50_2014-2024.dta')
+df_int_annual = pd.read_stata('./Data/All_ESG/EuroStoxx50_2014-2024_annual.dta')
+df_int_meta = pd.read_excel('./Data/All_ESG/EuroStoxx50-ticker-ciq-mapping.xlsx')
+df_int_meta_ticker = pd.read_stata('./Data/All_ESG/EuroStoxx50CompList.dta')
+df_int_meta_name = pd.read_csv(
+    './Data/All_ESG/Refinitiv-ESG_Scores-2008-2024_ret2024-04-29.csv', sep=';'
+)
+
+# Merge names on integrated dataframe
+df_int_merged = pd.merge(
+    df_int, df_int_meta_name[['ISIN', 'Company Common Name']],
+    left_on='isin', right_on='ISIN', how='left'
+).drop(columns=['ISIN'])
+
+# Clean names in data frames
 df1['clean_name'] = df1['Company_name'].apply(clean_name)
 df2['clean_name'] = df2['companyname'].apply(clean_name)
-
-
 
 # Dictionary for replacement
 replace_dict = {
@@ -63,57 +49,56 @@ replace_dict = {
 }
 
 # Replace values in the 'companyname' column
-
 df2['clean_name'] = df2['clean_name'].replace(replace_dict)
-
 df_int_merged['clean_name'] = df_int_merged['Company Common Name'].apply(clean_name)
 
-# Perform direct matching using Pandas merge for efficiency for dataframe without integration
+# Perform direct matching using Pandas merge for efficiency
 matched_df = pd.merge(df1, df2, on='clean_name', how='left', suffixes=('_df1', '_df2'))
 
 # Identify unmatched entries
 unmatched_df1 = matched_df[matched_df['Company_name'].isna()]
 
 matched_df['Combined_Names'] = matched_df['Company_name'] + " | " + matched_df['companyname']
+matched_df = matched_df[[
+    'clean_name', 'scoredate', 'csaindustrygroupname', 'csascoretypename',
+    'dimensionname', 'scorevalue', 'companyname', 'country', 'Combined_Names'
+]]
+matched_df['scoredate'] = matched_df['scoredate'].dt.year
 
-matched_df = matched_df[['clean_name','scoredate','csaindustrygroupname','csascoretypename','dimensionname','scorevalue','companyname','country','Combined_Names']]
-
-matched_df['scoredate'] = [date.year for date in matched_df['scoredate']]
-
-mean_scores = matched_df.groupby(['clean_name', 'scoredate','csaindustrygroupname','csascoretypename','dimensionname'])['scorevalue'].mean().reset_index()
+mean_scores = matched_df.groupby([
+    'clean_name', 'scoredate', 'csaindustrygroupname', 'csascoretypename', 'dimensionname'
+])['scorevalue'].mean().reset_index()
 
 mean_scores.drop_duplicates(inplace=True)
+mean_scores.to_pickle('./Data/matched_df_update3.pkl')
 
-# Save results to pickle
-mean_scores.to_pickle(r'./Data/matched_df_update3.pkl')
-
-# create three different dfs from integrated dataframe !!!!!!!!!!! Not final since Companies do not match with ours!!!!
-# 1. Get list of companies we need
-
+# Create a DataFrame with the list of companies we need
 df_companies = pd.DataFrame(matched_df['clean_name'].unique(), columns=['Company Name'])
-df_companies.to_excel(r'./Data/companies.xlsx', index=False)
+df_companies.to_excel('./Data/companies.xlsx', index=False)
 
 # Create the Bloomberg scores DataFrame
-bloomberg_df = df_int_merged[['Company Common Name', 'clean_name', 'scoredate',
-                              'escore_bloomberg', 'sscore_bloomberg', 'gscore_bloomberg']].dropna()
+bloomberg_df = df_int_merged[[
+    'Company Common Name', 'clean_name', 'scoredate',
+    'escore_bloomberg', 'sscore_bloomberg', 'gscore_bloomberg'
+]].dropna()
 
 # Create the S&P scores DataFrame
-sp_df = df_int_merged[['Company Common Name', 'clean_name', 'scoredate',
-                       'escore_sp', 'sscore_sp', 'gscore_sp']].dropna()
+sp_df = df_int_merged[[
+    'Company Common Name', 'clean_name', 'scoredate',
+    'escore_sp', 'sscore_sp', 'gscore_sp'
+]].dropna()
 
 # Create the Refinitiv scores DataFrame
-refinitiv_df = df_int_merged[['Company Common Name', 'clean_name', 'scoredate',
-                              'escore_ref', 'sscore_ref', 'gscore_ref']].dropna()
+refinitiv_df = df_int_merged[[
+    'Company Common Name', 'clean_name', 'scoredate',
+    'escore_ref', 'sscore_ref', 'gscore_ref'
+]].dropna()
 
-# Grouping them by year and name
-
+# Group by year and name
 bloomberg_df['scoredate'] = pd.to_datetime(bloomberg_df['scoredate'])
-
-# Extract the year from scoredate
 bloomberg_df['year'] = bloomberg_df['scoredate'].dt.year
+bloomberg_grouped = bloomberg_df.groupby([
+    'Company Common Name', 'clean_name', 'year'
+]).mean().reset_index()
 
-# Group by Company Common Name, clean_name, and year, then take the mean
-bloomberg_grouped = bloomberg_df.groupby(['Company Common Name', 'clean_name', 'year']).mean().reset_index()
-
-
-bloomberg_grouped['clean_name'].unique()
+print(bloomberg_grouped['clean_name'].unique())

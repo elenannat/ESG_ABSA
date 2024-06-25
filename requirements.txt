@@ -1,0 +1,16 @@
+pandas
+matplotlib
+seaborn
+wordcloud
+torch
+json
+tqdm
+setfit
+collections
+inflect
+re
+unidecode
+datasets
+sklearn
+numpy
+random

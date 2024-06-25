@@ -1,4 +1,4 @@
-# Project Title
+# ESG_ABSA
 
 ## Description
 This project involves training and applying an ABSA few-shot model and estimating a panel VAR model to analyze ESG aspects and sentiment in corporate reports.
